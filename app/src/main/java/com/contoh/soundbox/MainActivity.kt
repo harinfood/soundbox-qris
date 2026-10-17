@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.Toast
 
 class MainActivity : Activity() {
 
@@ -43,7 +44,7 @@ class MainActivity : Activity() {
         }
 
         findViewById<Button>(R.id.btnResetMp3).setOnClickListener {
-            Pengaturan.simpanSuaraKustom(this, null)
+            Pengaturan.hapusSuara(this)
             tampilkanSuara()
         }
 
@@ -55,10 +56,7 @@ class MainActivity : Activity() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "audio/*"
-            addFlags(
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-            )
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         startActivityForResult(intent, KODE_PILIH_MP3)
     }
@@ -67,23 +65,21 @@ class MainActivity : Activity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == KODE_PILIH_MP3 && resultCode == RESULT_OK) {
             val uri = data?.data ?: return
-            try {
-                // Izin baca dibuat permanen agar tetap bisa dibuka setelah aplikasi ditutup
-                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } catch (e: SecurityException) {
-                // Sumber tertentu tidak mendukung izin permanen, tetap simpan URI-nya
-            }
-            Pengaturan.simpanSuaraKustom(this, uri.toString())
+            val berhasil = Pengaturan.salinSuara(this, uri, namaFile(uri))
+            Toast.makeText(
+                this,
+                if (berhasil) "MP3 tersimpan" else "Gagal menyalin MP3",
+                Toast.LENGTH_SHORT
+            ).show()
             tampilkanSuara()
         }
     }
 
     private fun tampilkanSuara() {
-        val tersimpan = Pengaturan.suaraKustom(this)
-        txtSuara.text = if (tersimpan == null) {
-            "Suara: nada notifikasi HP (default)"
+        txtSuara.text = if (Pengaturan.adaSuaraKustom(this)) {
+            "Suara: ${Pengaturan.namaSuara(this) ?: "file mp3"}"
         } else {
-            "Suara: ${namaFile(Uri.parse(tersimpan))}"
+            "Suara: nada notifikasi HP (default)"
         }
     }
 

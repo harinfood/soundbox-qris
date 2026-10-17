@@ -5,11 +5,12 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
+import android.widget.Toast
 import java.util.Locale
 
 /**
@@ -20,6 +21,10 @@ import java.util.Locale
  * 4. Setelah semua selesai, volume dikembalikan ke semula
  */
 class AmountSpeaker(private val context: Context) {
+
+    companion object {
+        private const val TAG = "SoundboxQRIS"
+    }
 
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val handler = Handler(Looper.getMainLooper())
@@ -84,26 +89,34 @@ class AmountSpeaker(private val context: Context) {
     }
 
     private fun mainkanSuara(lanjut: () -> Unit) {
-        // Coba mp3 pilihan dulu. Jika gagal dibuka (file dihapus, izin hilang), pakai nada HP.
-        val kustom = Pengaturan.suaraKustom(context)?.let { Uri.parse(it) }
-        if (kustom != null && putarUri(kustom, lanjut)) return
+        val berkas = Pengaturan.fileSuara(context)
+
+        if (Pengaturan.adaSuaraKustom(context)) {
+            if (putar(lanjut) { it.setDataSource(berkas.absolutePath) }) return
+            handler.post {
+                Toast.makeText(context, "MP3 gagal diputar, memakai nada HP", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         val bawaan = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_NOTIFICATION)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        if (bawaan == null || !putarUri(bawaan, lanjut)) lanjut()
+        if (bawaan == null || !putar(lanjut) { it.setDataSource(context, bawaan) }) {
+            lanjut()
+        }
     }
 
-    /** Mengembalikan false jika file tidak bisa dibuka. Dalam kasus itu, lanjut tidak dipanggil. */
-    private fun putarUri(uri: Uri, lanjut: () -> Unit): Boolean {
+    /** Mengembalikan false jika sumber tidak bisa disiapkan. Dalam kasus itu, lanjut tidak dipanggil. */
+    private fun putar(lanjut: () -> Unit, siapkan: (MediaPlayer) -> Unit): Boolean {
         val pemutar = MediaPlayer()
         return try {
             pemutar.setAudioAttributes(atribut)
-            pemutar.setDataSource(context, uri)
+            siapkan(pemutar)
             pemutar.setOnCompletionListener {
                 it.release()
                 lanjut()
             }
-            pemutar.setOnErrorListener { p, _, _ ->
+            pemutar.setOnErrorListener { p, what, extra ->
+                Log.e(TAG, "MediaPlayer error: $what, $extra")
                 p.release()
                 lanjut()
                 true
@@ -112,6 +125,7 @@ class AmountSpeaker(private val context: Context) {
             pemutar.start()
             true
         } catch (e: Exception) {
+            Log.e(TAG, "Gagal memutar suara", e)
             pemutar.release()
             false
         }
