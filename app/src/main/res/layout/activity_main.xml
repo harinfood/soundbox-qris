@@ -2,7 +2,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="16dp">
 
     <Button
         android:id="@+id/btnIzin"
@@ -15,4 +15,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Tes Suara" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Aplikasi yang dipantau (kosong = semua aplikasi)"
+        android:textStyle="bold" />
+
+    <ListView
+        android:id="@+id/listAplikasi"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 </LinearLayout>
