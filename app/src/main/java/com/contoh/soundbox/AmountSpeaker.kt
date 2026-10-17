@@ -5,6 +5,7 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
@@ -14,7 +15,7 @@ import java.util.Locale
 /**
  * Urutan setiap pembayaran:
  * 1. Volume notifikasi dinaikkan ke maksimum
- * 2. Nada notifikasi bawaan HP dibunyikan
+ * 2. Suara dibunyikan: mp3 pilihan, atau nada notifikasi HP jika belum memilih
  * 3. TTS membacakan nominal
  * 4. Setelah semua selesai, volume dikembalikan ke semula
  */
@@ -42,7 +43,6 @@ class AmountSpeaker(private val context: Context) {
                    bahasa != TextToSpeech.LANG_NOT_SUPPORTED
 
             if (siap) {
-                // Gunakan jalur notifikasi agar ikut mengikuti volume notifikasi
                 tts?.setAudioAttributes(atribut)
                 tts?.setSpeechRate(0.9f)
                 tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -79,21 +79,24 @@ class AmountSpeaker(private val context: Context) {
                 audio.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION),
                 0
             )
-            mainkanNada { bicara(kata) }
+            mainkanSuara { bicara(kata) }
         }
     }
 
-    private fun mainkanNada(lanjut: () -> Unit) {
-        val uri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_NOTIFICATION)
+    private fun mainkanSuara(lanjut: () -> Unit) {
+        // Coba mp3 pilihan dulu. Jika gagal dibuka (file dihapus, izin hilang), pakai nada HP.
+        val kustom = Pengaturan.suaraKustom(context)?.let { Uri.parse(it) }
+        if (kustom != null && putarUri(kustom, lanjut)) return
+
+        val bawaan = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_NOTIFICATION)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        if (bawaan == null || !putarUri(bawaan, lanjut)) lanjut()
+    }
 
-        if (uri == null) {
-            lanjut()
-            return
-        }
-
+    /** Mengembalikan false jika file tidak bisa dibuka. Dalam kasus itu, lanjut tidak dipanggil. */
+    private fun putarUri(uri: Uri, lanjut: () -> Unit): Boolean {
         val pemutar = MediaPlayer()
-        try {
+        return try {
             pemutar.setAudioAttributes(atribut)
             pemutar.setDataSource(context, uri)
             pemutar.setOnCompletionListener {
@@ -107,9 +110,10 @@ class AmountSpeaker(private val context: Context) {
             }
             pemutar.prepare()
             pemutar.start()
+            true
         } catch (e: Exception) {
             pemutar.release()
-            lanjut()
+            false
         }
     }
 

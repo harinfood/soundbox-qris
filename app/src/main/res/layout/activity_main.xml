@@ -16,6 +16,25 @@
         android:layout_height="wrap_content"
         android:text="Tes Suara" />
 
+    <Button
+        android:id="@+id/btnPilihMp3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pilih File MP3 Notifikasi" />
+
+    <TextView
+        android:id="@+id/txtSuara"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Suara: nada notifikasi HP (default)" />
+
+    <Button
+        android:id="@+id/btnResetMp3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pakai Nada Notifikasi HP" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
