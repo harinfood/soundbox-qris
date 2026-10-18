@@ -4,10 +4,11 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
-        android:label="Soundbox QRIS"
+        android:label="Harinfood Soundbox QRIS"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Soundbox">
 
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
@@ -19,7 +20,7 @@
         <service
             android:name=".PaymentNotificationListener"
             android:exported="true"
-            android:label="Soundbox QRIS"
+            android:label="Harinfood Soundbox QRIS"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
