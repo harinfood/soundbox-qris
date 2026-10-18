@@ -190,7 +190,7 @@
                     android:padding="16dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackground">
+                    android:background="?android:attr/selectableItemBackground">
 
                     <FrameLayout
                         android:layout_width="44dp"
